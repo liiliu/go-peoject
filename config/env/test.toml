@@ -1,0 +1,55 @@
+# ========================================
+# 测试环境配置文件
+# ========================================
+
+[server]
+# 应用标识
+application = "YOUR_PROJECT"
+# 项目名称
+name = "your_project"
+# 监听端口
+port = 8080
+# 调试模式（测试环境建议开启）
+debug = true
+# 运行环境
+env = "TEST"
+# 日志文件路径
+logFileFolder = "./logs/log_error.log"
+# 临时文件目录
+tmpPath = "./tmp"
+
+[mysqlMaster]
+# 数据库连接DSN（测试环境）
+dsn = "root:password@tcp(127.0.0.1:3306)/your_db_test?charset=utf8mb4&parseTime=True&loc=Local"
+# 最大空闲连接数
+maxIdleConn = 10
+# 最大打开连接数
+maxOpenConn = 150
+# 表名前缀
+tablePrefix = "app_"
+# 测试环境可以启用自动迁移
+autoMigrate = true
+
+[redis]
+# Redis 地址（测试环境）
+host = "127.0.0.1:6379"
+# Redis 密码
+password = ""
+# Redis 数据库索引（使用不同的库）
+db = 1
+# 空闲超时时间（秒）
+idleTimeout = 300
+# 连接池大小
+poolSize = 80
+# 最大连接存活时间（秒）
+maxConnAge = 60
+# 缓存键前缀
+keyPrefix = "APP_TEST"
+
+[jwt]
+# JWT 加密密钥（测试环境）
+secret = "test-secret-key-change-in-production"
+# Token 过期时间（分钟）
+expireTime = 1440  # 24小时
+# 允许刷新时间（分钟）
+maxRefreshTime = 10080  # 7天

@@ -1,0 +1,53 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+dist/
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.html
+
+# Go workspace file
+go.work
+
+# Dependency directories
+vendor/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/*
+!logs/.gitkeep
+*.log
+tmp/*
+!tmp/.gitkeep
+
+# Config
+# 生产环境配置不要提交到 Git
+config/env/prod.toml
+
+# 本地配置（可选）
+# config/config.toml
+
+# Air (hot reload) temp files
+.air.toml
+
+# Build artifacts
+your_project
+your_project-*
