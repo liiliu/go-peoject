@@ -51,3 +51,8 @@ config/env/prod.toml
 # Build artifacts
 your_project
 your_project-*
+
+# Swagger 自动生成的文件
+docs/docs.go
+docs/swagger.json
+docs/swagger.yaml

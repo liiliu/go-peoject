@@ -13,7 +13,29 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// InitialAuthRoutes 注册认证路由
+func InitialAuthRoutes(app *fiber.App) {
+	auth := app.Group("/v1/auth")
+	auth.Post("/login", Login)
+	auth.Post("/register", Register)
+}
+
+// ========================================
+// 接口处理函数
+// ========================================
+
 // Login 用户登录（示例）
+// @Summary      用户登录
+// @Description  用户通过用户名和密码登录，返回 JWT Token
+// @Tags         认证
+// @Accept       json
+// @Produce      json
+// @Param        request  body      request.LoginRequest  true  "登录参数"
+// @Success      200      {object}  view.Result{data=object{token=string,username=string,user_id=int}}  "登录成功"
+// @Failure      1002     {object}  view.Result  "非法参数"
+// @Failure      1004     {object}  view.Result  "参数验证失败"
+// @Failure      1001     {object}  view.Result  "用户名或密码错误"
+// @Router       /v1/auth/login [post]
 func Login(c *fiber.Ctx) error {
 	logger.InfoWithTrace(c, "auth", "用户登录请求")
 	
@@ -63,6 +85,18 @@ func Login(c *fiber.Ctx) error {
 }
 
 // Register 用户注册（示例）
+// @Summary      用户注册
+// @Description  新用户注册账号
+// @Tags         认证
+// @Accept       json
+// @Produce      json
+// @Param        request  body      request.RegisterRequest  true  "注册参数"
+// @Success      200      {object}  view.Result{data=object{user_id=int,username=string}}  "注册成功"
+// @Failure      1002     {object}  view.Result  "非法参数"
+// @Failure      1004     {object}  view.Result  "参数验证失败"
+// @Failure      1001     {object}  view.Result  "用户名已存在"
+// @Failure      9999     {object}  view.Result  "注册失败"
+// @Router       /v1/auth/register [post]
 func Register(c *fiber.Ctx) error {
 	logger.InfoWithTrace(c, "auth", "用户注册请求")
 	
@@ -106,11 +140,4 @@ func Register(c *fiber.Ctx) error {
 		"user_id":  user.ID,
 		"username": user.Username,
 	}))
-}
-
-// InitialAuthRoutes 注册认证路由
-func InitialAuthRoutes(app *fiber.App) {
-	auth := app.Group("/v1/auth")
-	auth.Post("/login", Login)
-	auth.Post("/register", Register)
 }

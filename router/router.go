@@ -5,6 +5,7 @@ import (
 	"your_project/app/api/middleware"
 	"your_project/app/api/v1/auth"
 	"your_project/app/api/v1/health"
+	"your_project/app/api/v1/user"
 	"your_project/library/config"
 	"your_project/library/logger"
 
@@ -14,6 +15,9 @@ import (
 	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/gofiber/swagger"
+	
+	_ "your_project/docs" // 导入生成的 docs 包
 )
 
 // Run 启动路由
@@ -46,9 +50,18 @@ func Run() {
 		}))
 	}
 
-	// 注册路由
+	// 注册 Swagger 文档路由
+	app.Get("/swagger/*", swagger.HandlerDefault)
+	
+	// 注册业务路由（不需要Token验证）
 	health.InitialHealthRoutes(app)
 	auth.InitialAuthRoutes(app)
+	
+	// 应用 Token 验证中间件
+	app.Use(middleware.CheckToken)
+	
+	// 注册需要 Token 验证的路由
+	user.InitialUserRoutes(app)
 
 	// 404处理
 	app.Use(func(c *fiber.Ctx) error {

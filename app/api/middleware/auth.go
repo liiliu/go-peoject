@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"strings"
 	"your_project/app/view"
 	"your_project/library/common"
 	"your_project/library/jwt"
@@ -15,14 +16,20 @@ var NoAuthUrls = []string{
 	"/v1/auth/login",
 	"/v1/auth/register",
 	"/v1/health",
+	"/swagger",  // Swagger 文档路径前缀
 }
 
 // CheckToken 验证Token中间件
 func CheckToken(c *fiber.Ctx) error {
 	urlPath := string(c.Request().URI().Path())
 
-	// 不需要验证的接口
+	// 不需要验证的接口（精确匹配）
 	if util.InStringSlice(urlPath, NoAuthUrls) {
+		return c.Next()
+	}
+	
+	// Swagger 路径前缀匹配
+	if strings.HasPrefix(urlPath, "/swagger") {
 		return c.Next()
 	}
 
