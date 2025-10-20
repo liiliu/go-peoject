@@ -69,16 +69,6 @@ func Init() {
 	MyLogger = zap.New(core, caller, development, field, callerSkip)
 }
 
-// Info 信息日志（带标签）
-func Info(tag, msg string, args ...interface{}) {
-	if tag != "" {
-		field := zap.Fields(zap.String("tag", tag))
-		MyLogger.WithOptions(field).Sugar().Infof(msg, args...)
-	} else {
-		MyLogger.Sugar().Infof(msg, args...)
-	}
-}
-
 // Debug 调试日志（带标签）
 func Debug(tag, msg string, args ...interface{}) {
 	if tag != "" {
@@ -86,6 +76,16 @@ func Debug(tag, msg string, args ...interface{}) {
 		MyLogger.WithOptions(field).Sugar().Debugf(msg, args...)
 	} else {
 		MyLogger.Sugar().Debugf(msg, args...)
+	}
+}
+
+// Info 信息日志（带标签）
+func Info(tag, msg string, args ...interface{}) {
+	if tag != "" {
+		field := zap.Fields(zap.String("tag", tag))
+		MyLogger.WithOptions(field).Sugar().Infof(msg, args...)
+	} else {
+		MyLogger.Sugar().Infof(msg, args...)
 	}
 }
 
@@ -130,23 +130,6 @@ func GetTraceIDFromCtx(c *fiber.Ctx) string {
 	return ""
 }
 
-// InfoWithTrace 带TraceID的信息日志
-func InfoWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
-	traceID := GetTraceIDFromCtx(c)
-	fields := []zap.Field{}
-	if tag != "" {
-		fields = append(fields, zap.String("tag", tag))
-	}
-	if traceID != "" {
-		fields = append(fields, zap.String("trace_id", traceID))
-	}
-	if len(fields) > 0 {
-		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Infof(msg, args...)
-	} else {
-		MyLogger.Sugar().Infof(msg, args...)
-	}
-}
-
 // DebugWithTrace 带TraceID的调试日志
 func DebugWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
 	traceID := GetTraceIDFromCtx(c)
@@ -161,6 +144,23 @@ func DebugWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
 		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Debugf(msg, args...)
 	} else {
 		MyLogger.Sugar().Debugf(msg, args...)
+	}
+}
+
+// InfoWithTrace 带TraceID的信息日志
+func InfoWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
+	traceID := GetTraceIDFromCtx(c)
+	fields := []zap.Field{}
+	if tag != "" {
+		fields = append(fields, zap.String("tag", tag))
+	}
+	if traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if len(fields) > 0 {
+		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Infof(msg, args...)
+	} else {
+		MyLogger.Sugar().Infof(msg, args...)
 	}
 }
 
