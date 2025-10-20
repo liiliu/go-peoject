@@ -11,7 +11,7 @@
 # ============ 配置区域 ============
 
 # 项目部署目录（请根据实际情况修改）
-PROJECT_DIR="/data/server/ddt_v4/deploy_operation_backend_server"
+PROJECT_DIR="/data/server/your_project_prod"
 
 # 服务二进制文件名
 SERVER_BIN="server"

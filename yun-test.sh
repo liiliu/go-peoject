@@ -14,7 +14,7 @@
 SERVER_HOST="119.91.131.93"
 SERVER_PORT="61022"              # SSH 端口，默认 22 可不填或留空
 SERVER_USER="root"
-SERVER_PATH="/data/server/ddt_v4/deploy_operation_backend_server"
+SERVER_PATH="/data/server/your_project_prod"
 
 # 备用服务器配置（可选）
 # BACKUP_SERVER_HOST="106.55.181.113"
@@ -36,14 +36,23 @@ NC='\033[0m' # No Color
 
 # ============ 工具函数 ============
 
-# 构建 SSH/SCP 端口参数
-function get_port_param() {
+# 构建 SCP 端口参数（大写 -P）
+function get_scp_port_param() {
     local port=$1
-    # 如果端口为空或为 22，则不使用 -P 参数
     if [ -z "$port" ] || [ "$port" = "22" ]; then
         echo ""
     else
         echo "-P $port"
+    fi
+}
+
+# 构建 SSH 端口参数（小写 -p）
+function get_ssh_port_param() {
+    local port=$1
+    if [ -z "$port" ] || [ "$port" = "22" ]; then
+        echo ""
+    else
+        echo "-p $port"
     fi
 }
 
@@ -133,7 +142,7 @@ fi
 log_info "编译成功 (大小: $(du -h "${BUILD_DIR}/${BUILD_OUTPUT}" | cut -f1))"
 
 # 复制配置文件
-log_step "5/8 复制配置文件"
+log_step "5/8 复制配置和脚本文件"
 if [ ! -f "config/env/${CONFIG_ENV}.toml" ]; then
     log_error "配置文件不存在: config/env/${CONFIG_ENV}.toml"
     exit 1
@@ -141,6 +150,16 @@ fi
 
 cp -f "config/env/${CONFIG_ENV}.toml" "${BUILD_DIR}/config/config.toml"
 log_info "配置文件已复制: ${CONFIG_ENV}.toml -> config.toml"
+
+# 复制服务器管理脚本
+if [ -f "restart.sh" ]; then
+    # 转换换行符为 LF 并复制
+    sed 's/\r$//' "restart.sh" > "${BUILD_DIR}/restart.sh"
+    chmod +x "${BUILD_DIR}/restart.sh"
+    log_info "管理脚本已复制并转换换行符: restart.sh"
+else
+    log_warn "管理脚本不存在: restart.sh（如果服务器上已有则忽略）"
+fi
 
 # 打包
 log_step "6/8 打包部署文件"
@@ -157,24 +176,34 @@ log_step "7/8 上传到服务器"
 log_info "目标服务器: ${SERVER_USER}@${SERVER_HOST}:${SERVER_PORT}"
 log_info "目标路径: ${SERVER_PATH}"
 
-if ! scp $(get_port_param "${SERVER_PORT}") server.tgz "${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/server.tgz"; then
+# 确保服务器上的目标目录存在
+log_info "检查并创建服务器目录..."
+if ! ssh $(get_ssh_port_param "${SERVER_PORT}") "${SERVER_USER}@${SERVER_HOST}" "mkdir -p ${SERVER_PATH}"; then
+    log_error "无法创建服务器目录"
+    cd ..
+    exit 1
+fi
+log_info "服务器目录就绪"
+
+if ! scp $(get_scp_port_param "${SERVER_PORT}") server.tgz "${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/server.tgz"; then
     log_error "上传失败"
     cd ..
     exit 1
 fi
 log_info "上传成功"
 
-# 远程执行重启脚本
-log_step "8/8 远程重启服务"
-log_info "正在远程执行重启脚本..."
+# 远程执行部署和重启
+log_step "8/8 远程部署和重启服务"
+log_info "正在执行部署脚本..."
 
-if ! ssh $(get_port_param "${SERVER_PORT}") "${SERVER_USER}@${SERVER_HOST}" "cd ${SERVER_PATH} && bash restart.sh start"; then
-    log_error "远程重启失败"
+# 解压 restart.sh 并执行（restart.sh start 会自动调用 deploy 函数完成完整部署）
+if ! ssh $(get_ssh_port_param "${SERVER_PORT}") "${SERVER_USER}@${SERVER_HOST}" "cd ${SERVER_PATH} && tar -zxf server.tgz restart.sh && bash restart.sh start"; then
+    log_error "远程部署失败"
     cd ..
     exit 1
 fi
 
-log_info "远程重启完成"
+log_info "远程部署和重启完成"
 
 # 清理临时文件
 cd ..
