@@ -12,9 +12,9 @@ import (
 // InitialUserRoutes 注册用户路由
 func InitialUserRoutes(app *fiber.App) {
 	user := app.Group("/v1/user")
-	user.Get("/info", GetUserInfo)       // 获取用户信息
-	user.Put("/update", UpdateUserInfo)  // 更新用户信息
-	user.Get("/list", GetUserList)       // 获取用户列表
+	user.Get("/info", GetUserInfo)      // 获取用户信息
+	user.Put("/update", UpdateUserInfo) // 更新用户信息
+	user.Get("/list", GetUserList)      // 获取用户列表
 }
 
 // ========================================
