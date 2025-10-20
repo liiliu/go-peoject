@@ -4,6 +4,7 @@ import (
 	"os"
 	"your_project/library/config"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -20,7 +21,7 @@ func Init() {
 		MaxSize:    128,                                     // 每个日志文件最大尺寸 (MB)
 		MaxBackups: 30,                                      // 最多保留的备份数量
 		MaxAge:     7,                                       // 文件最多保存天数
-		Compress:   true,                                    // 是否压缩
+		Compress:   false,                                   // 是否压缩
 		LocalTime:  true,                                    // 使用本地时间
 	}
 
@@ -50,8 +51,8 @@ func Init() {
 			AtomicLevel,
 		)
 	} else {
-		// 生产模式：输出到控制台和文件，级别为Error
-		AtomicLevel.SetLevel(zap.ErrorLevel)
+		// 生产模式：输出到控制台和文件，级别为Info
+		AtomicLevel.SetLevel(zap.InfoLevel)
 		core = zapcore.NewCore(
 			zapcore.NewJSONEncoder(encoderConfig),
 			zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(&hook)),
@@ -113,6 +114,102 @@ func Fatal(tag, msg string, args ...interface{}) {
 	if tag != "" {
 		field := zap.Fields(zap.String("tag", tag))
 		MyLogger.WithOptions(field).Sugar().Fatalf(msg, args...)
+	} else {
+		MyLogger.Sugar().Fatalf(msg, args...)
+	}
+}
+
+// GetTraceIDFromCtx 从Fiber Context中获取TraceID
+func GetTraceIDFromCtx(c *fiber.Ctx) string {
+	if c == nil {
+		return ""
+	}
+	if traceID, ok := c.Locals("trace_id").(string); ok {
+		return traceID
+	}
+	return ""
+}
+
+// InfoWithTrace 带TraceID的信息日志
+func InfoWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
+	traceID := GetTraceIDFromCtx(c)
+	fields := []zap.Field{}
+	if tag != "" {
+		fields = append(fields, zap.String("tag", tag))
+	}
+	if traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if len(fields) > 0 {
+		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Infof(msg, args...)
+	} else {
+		MyLogger.Sugar().Infof(msg, args...)
+	}
+}
+
+// DebugWithTrace 带TraceID的调试日志
+func DebugWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
+	traceID := GetTraceIDFromCtx(c)
+	fields := []zap.Field{}
+	if tag != "" {
+		fields = append(fields, zap.String("tag", tag))
+	}
+	if traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if len(fields) > 0 {
+		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Debugf(msg, args...)
+	} else {
+		MyLogger.Sugar().Debugf(msg, args...)
+	}
+}
+
+// WarnWithTrace 带TraceID的警告日志
+func WarnWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
+	traceID := GetTraceIDFromCtx(c)
+	fields := []zap.Field{}
+	if tag != "" {
+		fields = append(fields, zap.String("tag", tag))
+	}
+	if traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if len(fields) > 0 {
+		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Warnf(msg, args...)
+	} else {
+		MyLogger.Sugar().Warnf(msg, args...)
+	}
+}
+
+// ErrorWithTrace 带TraceID的错误日志
+func ErrorWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
+	traceID := GetTraceIDFromCtx(c)
+	fields := []zap.Field{}
+	if tag != "" {
+		fields = append(fields, zap.String("tag", tag))
+	}
+	if traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if len(fields) > 0 {
+		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Errorf(msg, args...)
+	} else {
+		MyLogger.Sugar().Errorf(msg, args...)
+	}
+}
+
+// FatalWithTrace 带TraceID的致命错误日志
+func FatalWithTrace(c *fiber.Ctx, tag, msg string, args ...interface{}) {
+	traceID := GetTraceIDFromCtx(c)
+	fields := []zap.Field{}
+	if tag != "" {
+		fields = append(fields, zap.String("tag", tag))
+	}
+	if traceID != "" {
+		fields = append(fields, zap.String("trace_id", traceID))
+	}
+	if len(fields) > 0 {
+		MyLogger.WithOptions(zap.Fields(fields...)).Sugar().Fatalf(msg, args...)
 	} else {
 		MyLogger.Sugar().Fatalf(msg, args...)
 	}

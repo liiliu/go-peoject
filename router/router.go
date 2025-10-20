@@ -2,6 +2,7 @@ package router
 
 import (
 	"fmt"
+	"your_project/app/api/middleware"
 	"your_project/app/api/v1/auth"
 	"your_project/app/api/v1/health"
 	"your_project/library/config"
@@ -35,6 +36,7 @@ func Run() {
 	}))
 	app.Use(compress.New())
 	app.Use(requestid.New())
+	app.Use(middleware.TraceID()) // TraceID中间件，用于链路追踪
 	app.Use(recover.New())
 
 	// Debug模式下启用日志中间件

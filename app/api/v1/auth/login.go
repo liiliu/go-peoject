@@ -6,6 +6,7 @@ import (
 	"your_project/app/view"
 	"your_project/library/database"
 	"your_project/library/jwt"
+	"your_project/library/logger"
 	"your_project/library/util"
 	"your_project/library/validator"
 
@@ -14,39 +15,47 @@ import (
 
 // Login 用户登录（示例）
 func Login(c *fiber.Ctx) error {
+	logger.InfoWithTrace(c, "auth", "用户登录请求")
+	
 	// 解析请求参数
 	var req request.LoginRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.JSON(view.ErrorResult(view.CodeInvalidBody))
+		logger.WarnWithTrace(c, "auth", "登录参数解析失败: %v", err)
+		return c.JSON(view.ErrorWithCtx(c, view.CodeInvalidBody))
 	}
 
 	// 验证参数
 	if err := validator.Validate(&req); err != nil {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeInvalidParams, validator.GetErrorMsg(err)))
+		logger.WarnWithTrace(c, "auth", "登录参数验证失败: %v", err)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeInvalidParams, validator.GetErrorMsg(err)))
 	}
 
 	// 查询用户
 	db := database.NewEngine()
 	var user model.User
 	if err := db.Where("username = ?", req.Username).First(&user).Error; err != nil {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeFailed, "用户名或密码错误"))
+		logger.WarnWithTrace(c, "auth", "用户不存在: %s", req.Username)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeFailed, "用户名或密码错误"))
 	}
 
 	// 验证密码（这里简化处理，实际应使用bcrypt等加密）
 	if util.Md5(req.Password) != user.Password {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeFailed, "用户名或密码错误"))
+		logger.WarnWithTrace(c, "auth", "用户 %s 密码错误", req.Username)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeFailed, "用户名或密码错误"))
 	}
 
 	// 检查用户状态
 	if user.Status != 1 {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeFailed, "用户已被禁用"))
+		logger.WarnWithTrace(c, "auth", "用户 %s 已被禁用", req.Username)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeFailed, "用户已被禁用"))
 	}
 
 	// 生成Token
 	j := jwt.NewJWT()
 	token := j.IssueToken(string(rune(user.ID)), user.Username)
 
-	return c.JSON(view.SuccessResult(fiber.Map{
+	logger.InfoWithTrace(c, "auth", "用户 %s 登录成功", req.Username)
+	return c.JSON(view.SuccessWithCtx(c, fiber.Map{
 		"token":    token,
 		"username": user.Username,
 		"user_id":  user.ID,
@@ -55,14 +64,18 @@ func Login(c *fiber.Ctx) error {
 
 // Register 用户注册（示例）
 func Register(c *fiber.Ctx) error {
+	logger.InfoWithTrace(c, "auth", "用户注册请求")
+	
 	var req request.RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
-		return c.JSON(view.ErrorResult(view.CodeInvalidBody))
+		logger.WarnWithTrace(c, "auth", "注册参数解析失败: %v", err)
+		return c.JSON(view.ErrorWithCtx(c, view.CodeInvalidBody))
 	}
 
 	// 验证参数
 	if err := validator.Validate(&req); err != nil {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeInvalidParams, validator.GetErrorMsg(err)))
+		logger.WarnWithTrace(c, "auth", "注册参数验证失败: %v", err)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeInvalidParams, validator.GetErrorMsg(err)))
 	}
 
 	// 检查用户名是否已存在
@@ -70,7 +83,8 @@ func Register(c *fiber.Ctx) error {
 	var count int64
 	db.Model(&model.User{}).Where("username = ?", req.Username).Count(&count)
 	if count > 0 {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeFailed, "用户名已存在"))
+		logger.WarnWithTrace(c, "auth", "用户名已存在: %s", req.Username)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeFailed, "用户名已存在"))
 	}
 
 	// 创建用户（密码应使用bcrypt等加密，这里简化处理）
@@ -83,10 +97,12 @@ func Register(c *fiber.Ctx) error {
 	}
 
 	if err := db.Create(&user).Error; err != nil {
-		return c.JSON(view.ErrorResultWithMsg(view.CodeSystemError, "注册失败"))
+		logger.ErrorWithTrace(c, "auth", "创建用户失败: %v", err)
+		return c.JSON(view.ErrorWithMsgCtx(c, view.CodeSystemError, "注册失败"))
 	}
 
-	return c.JSON(view.SuccessResult(fiber.Map{
+	logger.InfoWithTrace(c, "auth", "用户 %s 注册成功", req.Username)
+	return c.JSON(view.SuccessWithCtx(c, fiber.Map{
 		"user_id":  user.ID,
 		"username": user.Username,
 	}))
