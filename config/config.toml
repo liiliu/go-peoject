@@ -10,7 +10,7 @@ name = "your_project"
 # 监听端口
 port = 8080
 # 调试模式
-debug = false
+debug = true
 # 运行环境 DEV/TEST/PROD
 env = "DEV"
 # 日志文件路径
